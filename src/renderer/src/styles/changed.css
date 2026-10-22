@@ -1,0 +1,8 @@
+/* 編集済みのセル・行を強調する色。ここを変更するとすべての画面に反映される */
+:root {
+  /* 編集したセル・行の背景色 */
+  --changed-bg: #fff59d;
+  /* 編集した行の行番号の背景色・文字色 */
+  --changed-row-header-bg: #ffe082;
+  --changed-row-header-color: #5d4037;
+}

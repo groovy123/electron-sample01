@@ -1,0 +1,30 @@
+#
+# electron-builder の設定。
+# `npm run dist:linux` で Ubuntu 向けに AppImage / deb を生成する。
+#
+appId: com.example.electron-vue-ts-sample
+productName: app-nss
+copyright: Copyright © 2026
+
+directories:
+  output: dist
+  buildResources: build
+
+files:
+  - out/**/*
+  - package.json
+  - '!**/*.map'
+
+linux:
+  target:
+    - AppImage
+    - deb
+  category: Utility
+  icon: build/icon.png
+  maintainer: example <example@example.com>
+
+appImage:
+  artifactName: ${productName}-${version}-${arch}.${ext}
+
+deb:
+  artifactName: ${productName}-${version}-${arch}.${ext}
