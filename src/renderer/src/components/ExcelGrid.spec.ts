@@ -288,15 +288,28 @@ describe('ExcelGrid 直接入力と列の型', () => {
     wrapper.unmount()
   })
 
-  it('数値列には数値以外が入らない', async () => {
-    const wrapper = mountView([{ name: 'A', type: 'number' }])
+  it('数値列は v-number-input で、既定は右寄せ。入力した数値が保持される', async () => {
+    const wrapper = mountView([{ name: 'A', type: 'number' }, { name: 'B', type: 'number', align: 'left' }], 3)
+    expect(wrapper.find('.v-number-input').exists()).toBe(true)
+    expect(wrapper.find('.v-number-input').classes()).toContain('align-right')
+    expect(wrapper.findAll('.v-number-input')[1].classes()).toContain('align-left')
     const a1 = wrapper.find('input[aria-label="A1"]')
     await a1.trigger('dblclick')
-    await a1.setValue('12')
-    await a1.setValue('12a')
-    expect((a1.element as HTMLInputElement).value).toBe('12')
     await a1.setValue('-1.5')
     expect((a1.element as HTMLInputElement).value).toBe('-1.5')
+    await a1.trigger('keydown', { key: 'Enter' })
+    expect((wrapper.find('input[aria-label="A1"]').element as HTMLInputElement).value).toBe('-1.5')
+    wrapper.unmount()
+  })
+
+  it('数値セルは編集中でなければ上下キーで値が増減せずセル移動する', async () => {
+    const wrapper = mountView([{ name: 'A', type: 'number' }], 3)
+    const a1 = wrapper.find('input[aria-label="A1"]')
+    await a1.trigger('focus')
+    await a1.trigger('keydown', { key: 'ArrowDown' })
+    expect(wrapper.find('input[aria-label="A1"]').element.closest('.excel-cell')?.classList.contains('selected')).toBe(false)
+    expect(wrapper.find('input[aria-label="A2"]').element.closest('.excel-cell')?.classList.contains('selected')).toBe(true)
+    expect((wrapper.find('input[aria-label="A1"]').element as HTMLInputElement).value).toBe('')
     wrapper.unmount()
   })
 
@@ -355,23 +368,70 @@ describe('ExcelGrid 列幅変更', () => {
     expect(wrapper.findAll('col')[1].attributes('style')).toContain('96px')
     wrapper.unmount()
   })
-  it('options指定の列はセレクトボックスになり、選択した値が保持される', async () => {
+  it('options指定の列はオートコンプリートになり、選択した値が保持される', async () => {
     const wrapper = mountView([{ name: '性別', type: 'string', options: ['男', '女'] }, { name: 'B', type: 'string' }])
-    expect(wrapper.find('select[aria-label="性別1"]').exists()).toBe(true)
+    expect(wrapper.find('.v-autocomplete').exists()).toBe(true)
+    expect(wrapper.find('select').exists()).toBe(false)
     expect(wrapper.find('input[aria-label="B1"]').exists()).toBe(true)
-    expect(wrapper.findAll('select[aria-label="性別1"] option').map((o) => o.text())).toEqual(['', '男', '女'])
-    await wrapper.find('select[aria-label="性別2"]').setValue('女')
-    expect((wrapper.find('select[aria-label="性別2"]').element as HTMLSelectElement).value).toBe('女')
+    const vm = wrapper.findAllComponents({ name: 'VAutocomplete' })[1]
+    vm.vm.$emit('update:modelValue', '女')
+    await wrapper.vm.$nextTick()
+    expect(wrapper.findAllComponents({ name: 'VAutocomplete' })[1].props('modelValue')).toBe('女')
+    vm.vm.$emit('update:modelValue', '選択肢外')
+    await wrapper.vm.$nextTick()
+    expect(wrapper.findAllComponents({ name: 'VAutocomplete' })[1].props('modelValue')).toBe('女')
     wrapper.unmount()
   })
 
-  it('セレクトボックスのセルで文字入力しても編集モードにならない', async () => {
-    const wrapper = mountView([{ name: '性別', type: 'string', options: ['男', '女'] }])
-    const sel = wrapper.find('select[aria-label="性別1"]')
-    await sel.setValue('男')
-    await sel.trigger('focus')
-    await sel.trigger('keydown', { key: 'a' })
-    expect((sel.element as HTMLSelectElement).value).toBe('男')
+  it('オートコンプリートのセルは移動キーでセル移動し、F2でメニューを開く', async () => {
+    const wrapper = mountView([{ name: '性別', type: 'string', options: ['男', '女'] }], 3)
+    const first = wrapper.find('input[aria-label="性別1"]')
+    await first.trigger('focus')
+    await first.trigger('keydown', { key: 'ArrowDown' })
+    expect(wrapper.find('input[aria-label="性別2"]').element.closest('.excel-cell')?.classList.contains('selected')).toBe(true)
+    await wrapper.find('input[aria-label="性別2"]').trigger('keydown', { key: 'F2' })
+    expect(wrapper.findAllComponents({ name: 'VAutocomplete' })[1].props('menu')).toBe(true)
+    wrapper.unmount()
+  })
+
+  it('readonlyでは選択セルの値を消せず、クリアボタンも表示しない', async () => {
+    const wrapper = mount(ExcelGrid, {
+      props: { columns: [{ name: '性別', type: 'string', options: ['男', '女'] }], rows: 1, initialData: [['男']], readonly: true },
+      global: { plugins: [vuetify] }
+    })
+    expect(wrapper.find('.v-field__clearable').exists()).toBe(false)
+    const picker = wrapper.findComponent({ name: 'VAutocomplete' })
+    picker.vm.$emit('update:modelValue', null)
+    await wrapper.vm.$nextTick()
+    expect(wrapper.findComponent({ name: 'VAutocomplete' }).props('modelValue')).toBe('男')
+    const input = wrapper.find('input[aria-label="性別1"]')
+    await input.trigger('focus')
+    await input.trigger('keydown', { key: 'Delete' })
+    expect(wrapper.findComponent({ name: 'VAutocomplete' }).props('modelValue')).toBe('男')
+    wrapper.unmount()
+  })
+
+  it('スイッチ列(boolean)は v-switch で、切り替えが保持され、Deleteでオフになる', async () => {
+    const wrapper = mountView([{ name: '完了', type: 'boolean' }], 3)
+    expect(wrapper.find('.v-switch').classes()).toContain('align-center')
+    const sw = wrapper.find('input[aria-label="完了1"]')
+    expect((sw.element as HTMLInputElement).checked).toBe(false)
+    await sw.setValue(true)
+    expect((wrapper.find('input[aria-label="完了1"]').element as HTMLInputElement).checked).toBe(true)
+    await wrapper.find('input[aria-label="完了1"]').trigger('focus')
+    await wrapper.find('input[aria-label="完了1"]').trigger('keydown', { key: 'Delete' })
+    expect((wrapper.find('input[aria-label="完了1"]').element as HTMLInputElement).checked).toBe(false)
+    wrapper.unmount()
+  })
+
+  it('スイッチ列は文字入力しても編集モードにならず、readonlyでは切り替えられない', async () => {
+    const wrapper = mount(ExcelGrid, { props: { columns: [{ name: '完了', type: 'boolean' }], rows: 2, readonly: true }, global: { plugins: [vuetify] } })
+    const sw = wrapper.find('input[aria-label="完了1"]')
+    await sw.trigger('focus')
+    await sw.trigger('keydown', { key: 'a' })
+    expect(wrapper.find('.editing').exists()).toBe(false)
+    await sw.setValue(true)
+    expect((wrapper.find('input[aria-label="完了1"]').element as HTMLInputElement).checked).toBe(false)
     wrapper.unmount()
   })
 })

@@ -1,5 +1,5 @@
 /** PropertyGridの値の型 */
-export type PropertyType = 'string' | 'number' | 'select' | 'date'
+export type PropertyType = 'string' | 'number' | 'select' | 'date' | 'boolean'
 
 /** PropertyGridの1行 */
 export interface PropertyRow {
@@ -7,7 +7,7 @@ export interface PropertyRow {
   key: string
   /** 値の型 */
   type: PropertyType
-  /** 値 */
+  /** 値（boolean は 'true' / 'false'、空はOFF扱い） */
   value: string
   /** セレクトの選択肢 */
   options?: string[]

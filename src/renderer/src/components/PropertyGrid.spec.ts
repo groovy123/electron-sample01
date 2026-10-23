@@ -36,7 +36,8 @@ describe('PropertyGrid', () => {
 
   it('型に応じた入力コンポーネントを表示する', () => {
     const wrapper = mountGrid()
-    expect(wrapper.findAllComponents({ name: 'VSelect' })).toHaveLength(1)
+    expect(wrapper.findAllComponents({ name: 'VAutocomplete' })).toHaveLength(1)
+    expect(wrapper.findAllComponents({ name: 'VNumberInput' })).toHaveLength(1)
     expect(wrapper.find('input[type="date"]').exists()).toBe(true)
   })
 
@@ -56,6 +57,34 @@ describe('PropertyGrid', () => {
     const wrapper = mountGrid()
     await wrapper.find('input[aria-label="年齢"]').setValue('4x')
     expect(wrapper.emitted('change')).toBeUndefined()
+  })
+
+  it('数値行は右寄せのクラスを持つ', () => {
+    expect(mountGrid().find('.number-input').exists()).toBe(true)
+  })
+
+  it('セレクト行の選択を change で通知し、クリアすると空になる', async () => {
+    const wrapper = mountGrid()
+    const picker = wrapper.findComponent({ name: 'VAutocomplete' })
+    picker.vm.$emit('update:modelValue', '女')
+    picker.vm.$emit('update:modelValue', null)
+    expect(wrapper.emitted('change')).toEqual([[2, '女'], [2, '']])
+  })
+
+  it('boolean行はスイッチで、切り替えを true / false で通知する', async () => {
+    const rows: PropertyRow[] = [{ key: '有効', type: 'boolean', value: '' }]
+    const wrapper = mountGrid(rows)
+    expect(wrapper.find('.v-switch').exists()).toBe(true)
+    const sw = wrapper.find('input[aria-label="有効"]')
+    expect((sw.element as HTMLInputElement).checked).toBe(false)
+    await sw.setValue(true)
+    await wrapper.find('input[aria-label="有効"]').setValue(false)
+    expect(wrapper.emitted('change')).toEqual([[0, 'true'], [0, 'false']])
+  })
+
+  it('編集不可のboolean行はスイッチが無効になる', () => {
+    const wrapper = mountGrid([{ key: '有効', type: 'boolean', value: 'true', editable: false }])
+    expect(wrapper.find('input[aria-label="有効"]').attributes('disabled')).toBeDefined()
   })
 
   it('日付行はカレンダーの値を反映する', async () => {

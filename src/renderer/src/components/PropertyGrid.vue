@@ -1,8 +1,10 @@
 <script setup lang="ts">
 /**
  * PropertyGridコンポーネント。
- * 行番号・キー・値の3列固定の表で、行ごとに値の型（文字列/数値/セレクト/カレンダー）と
+ * 行番号・キー・値の3列固定の表で、行ごとに値の型（文字列/数値/セレクト/日付/スイッチ）と
  * 編集可否を指定できる。行の追加はできない。
+ * 数値は v-number-input（右寄せ）、セレクトは v-autocomplete、日付はカレンダー入力、
+ * boolean は v-switch で、ExcelGrid と同じ部品を使う。
  */
 import type { PropertyRow } from '../composables/usePropertyGrid'
 
@@ -29,6 +31,26 @@ function onInput(row: PropertyRow, index: number, value: string): void {
   row.value = value
   emit('change', index, value)
 }
+
+/**
+ * 数値入力の値を通知する。
+ * @param row 対象の行
+ * @param index 行インデックス
+ * @param value 入力された数値（空は null）
+ */
+function onNumber(row: PropertyRow, index: number, value: number | null): void {
+  onInput(row, index, value === null ? '' : String(value))
+}
+
+/**
+ * スイッチの切り替えを通知する。
+ * @param row 対象の行
+ * @param index 行インデックス
+ * @param value ONなら true
+ */
+function onSwitch(row: PropertyRow, index: number, value: boolean | null): void {
+  onInput(row, index, value ? 'true' : 'false')
+}
 </script>
 
 <template>
@@ -53,22 +75,55 @@ function onInput(row: PropertyRow, index: number, value: string): void {
           {{ row.key }}
         </td>
         <td class="value">
-          <v-select
+          <v-autocomplete
             v-if="row.type === 'select'"
-            :model-value="row.value"
+            :model-value="row.value || null"
             :items="row.options ?? []"
             :disabled="row.editable === false"
             :aria-label="row.key"
+            :clearable="row.editable !== false"
             variant="plain"
             density="compact"
             hide-details
+            hide-no-data
+            auto-select-first
             @update:model-value="onInput(row, i, $event ?? '')"
           />
+          <v-number-input
+            v-else-if="row.type === 'number'"
+            class="number-input"
+            :model-value="row.value === '' ? null : Number(row.value)"
+            :precision="null"
+            :disabled="row.editable === false"
+            :aria-label="row.key"
+            control-variant="hidden"
+            variant="plain"
+            density="compact"
+            hide-details
+            @update:model-value="onNumber(row, i, $event)"
+          />
+          <v-switch
+            v-else-if="row.type === 'boolean'"
+            :model-value="row.value === 'true'"
+            :disabled="row.editable === false"
+            :aria-label="row.key"
+            color="primary"
+            density="compact"
+            hide-details
+            @update:model-value="onSwitch(row, i, $event)"
+          />
+          <input
+            v-else-if="row.type === 'date'"
+            type="date"
+            class="date-input"
+            :value="row.value"
+            :disabled="row.editable === false"
+            :aria-label="row.key"
+            @change="onInput(row, i, ($event.target as HTMLInputElement).value)"
+          >
           <v-text-field
             v-else
             :model-value="row.value"
-            :type="row.type === 'date' ? 'date' : 'text'"
-            :inputmode="row.type === 'number' ? 'decimal' : undefined"
             :disabled="row.editable === false"
             :aria-label="row.key"
             variant="plain"
@@ -108,5 +163,18 @@ function onInput(row: PropertyRow, index: number, value: string): void {
 }
 .key {
   width: 35%;
+}
+.number-input :deep(input) {
+  text-align: right;
+}
+.date-input {
+  width: 100%;
+  height: 40px;
+  font: inherit;
+  color: inherit;
+  outline: none;
+}
+.date-input:disabled {
+  opacity: var(--v-disabled-opacity);
 }
 </style>

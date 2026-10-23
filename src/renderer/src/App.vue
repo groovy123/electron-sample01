@@ -16,6 +16,8 @@ interface MenuItem {
 const menuItems: readonly MenuItem[] = [
   { title: 'Home', icon: 'mdi-view-dashboard', to: '/' },
   { title: 'イベント一覧', icon: 'mdi-calendar-star', to: '/events' },
+  { title: 'ExcelGridサンプル', icon: 'mdi-table', to: '/excel-grid' },
+  { title: 'PropertyGridサンプル', icon: 'mdi-format-list-bulleted', to: '/property-grid' },
   { title: 'About', icon: 'mdi-information', to: '/about' }
 ]
 </script>

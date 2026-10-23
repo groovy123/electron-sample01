@@ -12,7 +12,7 @@
 - **CSS**: Vuetify
 - **主要ツール**: npm (パッケージ管理), ESLint (リント・フォーマット), Vitest, Vue Test Utils
 - **パッケージ管理**: npm
-- **リンター/フォーマッター**: ESLint (Flat Config: `eslint.config.js`)
+- **リンター/フォーマッター**: ESLint (Flat Config: `eslint.config.mjs`)
 - **テストフレームワーク**: Vitest, Vue Test Utils, vitest/ui, vitest/coverage-v8
 - **自動化**: Husky, lint-staged, GitHub Actions
 

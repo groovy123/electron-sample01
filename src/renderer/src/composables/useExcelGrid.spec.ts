@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { columnLabel, createEmptyCells, isValidInput, isValidValue, useExcelGrid, type ColumnDefinition } from './useExcelGrid'
+import { columnLabel, resolveAlign, createEmptyCells, isValidInput, isValidValue, useExcelGrid, type ColumnDefinition } from './useExcelGrid'
 
 describe('columnLabel', () => {
   it('Excel形式の列名に変換する', () => {
@@ -244,5 +244,28 @@ describe('useExcelGrid フィルタ', () => {
     g.setFilter(1, '東')
     g.toggleSort(0)
     expect(g.visibleRows.value.map((r) => g.cells.value[r][0])).toEqual(['Apple', 'apricot'])
+  })
+})
+
+describe('boolean列と表示位置', () => {
+  it('boolean列は true / false / 空のみ入力できる', () => {
+    expect(isValidInput('boolean', 'true')).toBe(true)
+    expect(isValidInput('boolean', 'false')).toBe(true)
+    expect(isValidInput('boolean', '')).toBe(true)
+    expect(isValidInput('boolean', 'yes')).toBe(false)
+    expect(isValidValue('boolean', 'maybe')).toBe(false)
+    const { setCell, cells } = useExcelGrid([{ name: 'A', type: 'boolean' }], 1)
+    expect(setCell(0, 0, 'true')).toBe(true)
+    expect(setCell(0, 0, 'x')).toBe(false)
+    expect(cells.value[0][0]).toBe('true')
+  })
+
+  it('表示位置は指定が優先で、省略時は数値が右・booleanが中央・他は左', () => {
+    expect(resolveAlign({ name: 'A', type: 'number' })).toBe('right')
+    expect(resolveAlign({ name: 'A', type: 'number', align: 'left' })).toBe('left')
+    expect(resolveAlign({ name: 'A', type: 'boolean' })).toBe('center')
+    expect(resolveAlign({ name: 'A', type: 'string' })).toBe('left')
+    expect(resolveAlign({ name: 'A', type: 'date' })).toBe('left')
+    expect(useExcelGrid([{ name: 'A', type: 'number' }, { name: 'B', type: 'string' }], 1).columnAligns.value).toEqual(['right', 'left'])
   })
 })

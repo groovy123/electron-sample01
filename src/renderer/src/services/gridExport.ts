@@ -35,7 +35,7 @@ export function toTsv(table: GridTable): string {
 }
 
 /**
- * 表をxlsxのバイナリに変換する。数値列の有効な数値は数値セル、空欄は空セルにする。
+ * 表をxlsxのバイナリに変換する。数値列の有効な数値は数値セル、ON/OFF列は真偽値セル、空欄は空セルにする。
  * @param table 出力対象の表
  * @param sheetName シート名
  * @returns xlsxのバイナリ
@@ -48,6 +48,7 @@ export async function buildXlsx(table: GridTable, sheetName = 'Sheet1'): Promise
   table.rows.forEach((row) =>
     sheet.addRow(
       row.map((v, c) => {
+        if (table.types[c] === 'boolean') return v === 'true'
         if (v === '') return null
         return table.types[c] === 'number' && Number.isFinite(Number(v)) ? Number(v) : v
       })

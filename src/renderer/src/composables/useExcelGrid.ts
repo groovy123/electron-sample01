@@ -6,8 +6,16 @@ export interface CellPosition {
   col: number
 }
 
-/** 列に指定できる型（文字列・数値のみ・日付） */
-export type ColumnType = 'string' | 'number' | 'date'
+/** 列に指定できる型（文字列・数値のみ・日付・ON/OFF） */
+export type ColumnType = 'string' | 'number' | 'date' | 'boolean'
+
+/** セルの表示位置 */
+export type ColumnAlign = 'left' | 'center' | 'right'
+
+/** ON/OFF列でONを表す値（OFFは 'false' または空） */
+export const BOOLEAN_TRUE = 'true'
+/** ON/OFF列でOFFを表す値 */
+export const BOOLEAN_FALSE = 'false'
 
 /** グリッド初期化時に指定する列定義 */
 export interface ColumnDefinition {
@@ -17,6 +25,8 @@ export interface ColumnDefinition {
   type: ColumnType
   /** 初期幅(px)。省略時は既定値、最小幅未満は最小幅に丸める */
   width?: number
+  /** セルの表示位置。省略時は数値列が右寄せ、ON/OFF列が中央、それ以外は左寄せ */
+  align?: ColumnAlign
   /** 選択肢。指定した列はセレクトボックスになり、選択肢以外の値は入力できない */
   options?: string[]
   /** ソート可能か（省略時は不可。可の列はヘッダーにソートボタンを表示する） */
@@ -38,6 +48,7 @@ export const MIN_COLUMN_WIDTH = 40
  */
 export function isValidInput(type: ColumnType, value: string): boolean {
   if (value === '' || type === 'string') return true
+  if (type === 'boolean') return value === BOOLEAN_TRUE || value === BOOLEAN_FALSE
   if (type === 'number') return /^-?\d*\.?\d*$/.test(value)
   return /^\d{0,4}(-\d{0,2}(-\d{0,2})?)?$/.test(value)
 }
@@ -50,6 +61,7 @@ export function isValidInput(type: ColumnType, value: string): boolean {
  */
 export function isValidValue(type: ColumnType, value: string): boolean {
   if (value === '' || type === 'string') return true
+  if (type === 'boolean') return value === BOOLEAN_TRUE || value === BOOLEAN_FALSE
   if (type === 'number') return /^-?(\d+\.?\d*|\.\d+)$/.test(value)
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
   if (!m) return false
@@ -77,6 +89,8 @@ export interface UseExcelGridReturn {
   columnTypes: Ref<ColumnType[]>
   /** 列ごとの選択肢（選択式でない列は null） */
   columnOptions: Ref<(string[] | null)[]>
+  /** 列ごとの表示位置 */
+  columnAligns: Ref<ColumnAlign[]>
   /** 列ごとの幅(px) */
   columnWidths: Ref<number[]>
   /** 列幅を変更する（最小幅未満は最小幅に丸める） */
@@ -107,6 +121,17 @@ export interface UseExcelGridReturn {
   select: (row: number, col: number) => void
   /** 選択を移動する（範囲外は無視） */
   move: (dRow: number, dCol: number) => void
+}
+
+/**
+ * 列の表示位置を決める（指定がなければ型に応じた既定値）。
+ * @param column 列定義
+ * @returns 表示位置
+ */
+export function resolveAlign(column: ColumnDefinition): ColumnAlign {
+  if (column.align) return column.align
+  if (column.type === 'number') return 'right'
+  return column.type === 'boolean' ? 'center' : 'left'
 }
 
 /**
@@ -151,6 +176,7 @@ export function useExcelGrid(columns: readonly ColumnDefinition[], rows = 20, in
   const columnNames = ref<string[]>(columns.map((c) => c.name))
   const columnTypes = ref<ColumnType[]>(columns.map((c) => c.type))
   const columnOptions = ref<(string[] | null)[]>(columns.map((c) => c.options ?? null))
+  const columnAligns = ref<ColumnAlign[]>(columns.map(resolveAlign))
   const columnWidths = ref<number[]>(
     columns.map((c) => (c.width !== undefined && Number.isFinite(c.width) ? Math.max(MIN_COLUMN_WIDTH, Math.round(c.width)) : DEFAULT_COLUMN_WIDTH))
   )
@@ -230,5 +256,5 @@ export function useExcelGrid(columns: readonly ColumnDefinition[], rows = 20, in
     select(visible[pos], cur.col + dCol)
   }
 
-  return { cells, rowIds, columnFilterable, filters, setFilter, visibleRows, columnSortable, sortState, toggleSort, columnNames, columnTypes, columnOptions, columnWidths, setColumnWidth, selected, setCell, addRow, select, move }
+  return { cells, rowIds, columnFilterable, filters, setFilter, visibleRows, columnSortable, sortState, toggleSort, columnNames, columnTypes, columnOptions, columnAligns, columnWidths, setColumnWidth, selected, setCell, addRow, select, move }
 }

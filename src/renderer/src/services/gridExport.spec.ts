@@ -38,6 +38,17 @@ describe('gridExport', () => {
     })
   })
 
+  describe('buildXlsx (boolean列)', () => {
+    it('ON/OFF列は真偽値セルにする', async () => {
+      const wb = new Workbook()
+      await wb.xlsx.load(await buildXlsx({ headers: ['完了'], types: ['boolean'], rows: [['true'], ['false'], ['']] }))
+      const sheet = wb.getWorksheet('Sheet1')!
+      expect(sheet.getRow(2).getCell(1).value).toBe(true)
+      expect(sheet.getRow(3).getCell(1).value).toBe(false)
+      expect(sheet.getRow(4).getCell(1).value).toBe(false)
+    })
+  })
+
   describe('downloadXlsx', () => {
     it('xlsxファイル名でダウンロードを開始する', async () => {
       const createObjectURL = vi.fn().mockReturnValue('blob:x')
