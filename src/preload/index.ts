@@ -17,7 +17,13 @@ const api = {
    * @param limit 取得件数
    * @returns レスポンスJSON
    */
-  fetchEvents: (limit: number): Promise<unknown> => ipcRenderer.invoke('external-api:fetch-events', limit)
+  fetchEvents: (limit: number): Promise<unknown> => ipcRenderer.invoke('external-api:fetch-events', limit),
+
+  /**
+   * メインプロセス経由で外部API（公共施設一覧）のレスポンスJSON（全件）を取得する。
+   * @returns レスポンスJSON
+   */
+  fetchFacilities: (): Promise<unknown> => ipcRenderer.invoke('external-api:fetch-facilities')
 }
 
 if (process.contextIsolated) {

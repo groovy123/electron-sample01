@@ -108,3 +108,17 @@ export async function fetchEvents(limit: number = DEFAULT_EVENT_LIMIT): Promise<
 export function toEventGridData(records: readonly EventRecord[]): string[][] {
   return records.map((rec) => EVENT_COLUMNS.map(({ pick }) => (pick(rec) ?? '').trim()))
 }
+
+/** 数値として扱う列の名前（AG Grid版の一覧で数値列にする） */
+export const EVENT_NUMERIC_COLUMNS: readonly string[] = ['人数', '料金']
+
+/**
+ * 表示値を数値に変換する。空欄や数値として解釈できない値（「無料」など）は 0 とする。
+ * 桁区切りのカンマは取り除いて解釈する。
+ * @param value 表示値
+ * @returns 数値
+ */
+export function toNumberOrZero(value: string): number {
+  const n = Number(value.replace(/,/g, '').trim() || 0)
+  return Number.isFinite(n) ? n : 0
+}

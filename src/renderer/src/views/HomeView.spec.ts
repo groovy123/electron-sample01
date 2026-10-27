@@ -21,7 +21,8 @@ describe('HomeView', () => {
   beforeEach(() => {
     window.api = {
       getAppVersion: vi.fn().mockResolvedValue('1.2.3'),
-      fetchEvents: vi.fn()
+      fetchEvents: vi.fn(),
+      fetchFacilities: vi.fn()
     }
   })
 
@@ -66,7 +67,8 @@ describe('HomeView', () => {
   it('バージョン取得に失敗した場合はエラーメッセージを表示する', async () => {
     window.api = {
       getAppVersion: vi.fn().mockRejectedValue(new Error('IPC error')),
-      fetchEvents: vi.fn()
+      fetchEvents: vi.fn(),
+      fetchFacilities: vi.fn()
     }
     const wrapper = mountHomeView()
     await flushPromises()

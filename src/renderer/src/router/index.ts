@@ -2,6 +2,7 @@ import { createRouter, createWebHashHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import EventListView from '../views/EventListView.vue'
 import EventListAgGridView from '../views/EventListAgGridView.vue'
+import FacilityListView from '../views/FacilityListView.vue'
 import EventDetailView from '../views/EventDetailView.vue'
 import ExcelGridSampleView from '../views/ExcelGridSampleView.vue'
 import PropertyGridSampleView from '../views/PropertyGridSampleView.vue'
@@ -18,6 +19,7 @@ export const router = createRouter({
     { path: '/events', name: 'events', component: EventListView },
     { path: '/events-ag-grid', name: 'events-ag-grid', component: EventListAgGridView },
     { path: '/events/:index(\\d+)', name: 'event-detail', component: EventDetailView },
+    { path: '/facilities', name: 'facilities', component: FacilityListView },
     { path: '/excel-grid', name: 'excel-grid', component: ExcelGridSampleView },
     { path: '/property-grid', name: 'property-grid', component: PropertyGridSampleView },
     { path: '/about', name: 'about', component: AboutView }

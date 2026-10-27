@@ -26,6 +26,7 @@ const AgGridVueStub = defineComponent({
     columnDefs: { type: Array, default: () => [] },
     defaultColDef: { type: Object, default: () => ({}) },
     rowNumbers: { type: Boolean, default: false },
+    grandTotalRow: { type: String, default: undefined },
     localeText: { type: Object, default: () => ({}) },
     cellSelection: { type: Boolean, default: false },
     sideBar: { type: Array, default: () => [] }
@@ -73,8 +74,16 @@ describe('EventListAgGridView', () => {
     expect(colDefs(wrapper).map((c) => c.headerName)).toEqual([
       'ID', 'イベント名', '開始日', '終了日', '開始時間', '終了時間', '開催場所', '住所', '人数', '料金', '連絡先', '電話番号'
     ])
-    expect(colDefs(wrapper).every((c) => c.filter === 'agSetColumnFilter')).toBe(true)
-    expect(grid(wrapper).props('defaultColDef')).toMatchObject({ sortable: true, floatingFilter: true, editable: false, enableRowGroup: true })
+    const textCols = colDefs(wrapper).filter((c) => !['人数', '料金'].includes(c.headerName!))
+    expect(textCols.every((c) => c.filter === 'agSetColumnFilter')).toBe(true)
+    expect(grid(wrapper).props('defaultColDef')).toMatchObject({ sortable: true, floatingFilter: true,
+      editable: false,
+      enableRowGroup: true,
+      enableValue: true,
+      defaultAggFunc: 'count',
+      allowedAggFuncs: ['count', 'first', 'last']
+    })
+    expect(grid(wrapper).props('grandTotalRow')).toBe('bottom')
     expect(grid(wrapper).props('rowNumbers')).toBe(true)
     expect(grid(wrapper).props('sideBar')).toEqual(['columns', 'filters'])
   })
@@ -92,6 +101,34 @@ describe('EventListAgGridView', () => {
     expect(valueGetter(1)({ data: rows(wrapper)[0] })).toBe('ボッチャ体験教室')
     expect(valueGetter(6)({ data: rows(wrapper)[0] })).toBe('水元小合学園')
     expect(valueGetter(1)({ data: undefined })).toBe('')
+  })
+
+  it('人数・料金は数値列で、空欄や数値でない値は0として扱う', async () => {
+    fetchEvents.mockResolvedValue([
+      { ID: { 識別値: '1' }, 人数: '30', 料金: { 金額: { 数値: '1,500' } } },
+      { ID: { 識別値: '2' } },
+      { ID: { 識別値: '3' }, 人数: '先着順', 料金: { 金額: { 数値: '無料' } } }
+    ])
+    const wrapper = mountView()
+    await wrapper.find('button.fetch-events').trigger('click')
+    await flushPromises()
+    const valueOf = (col: string, row: number) =>
+      (colDefs(wrapper).find((c) => c.headerName === col)!.valueGetter as (p: unknown) => unknown)({
+        data: rows(wrapper)[row]
+      })
+    expect([0, 1, 2].map((r) => valueOf('人数', r))).toEqual([30, 0, 0])
+    expect([0, 1, 2].map((r) => valueOf('料金', r))).toEqual([1500, 0, 0])
+    expect(valueOf('ID', 0)).toBe('1')
+    expect(valueOf('人数', 0)).not.toBe('30')
+
+    const people = colDefs(wrapper).find((c) => c.headerName === '人数')!
+    expect(people).toMatchObject({
+      type: 'numericColumn',
+      filter: 'agNumberColumnFilter',
+      defaultAggFunc: 'sum',
+      allowedAggFuncs: ['sum', 'avg', 'min', 'max', 'count']
+    })
+    expect(colDefs(wrapper).find((c) => c.headerName === 'ID')!.type).toBeUndefined()
   })
 
   it('選択した件数がURL表示と取得に反映される', async () => {

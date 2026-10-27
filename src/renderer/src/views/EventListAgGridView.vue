@@ -15,8 +15,10 @@ import {
   DEFAULT_EVENT_LIMIT,
   EVENT_COLUMNS,
   EVENT_LIMIT_OPTIONS,
+  EVENT_NUMERIC_COLUMNS,
   fetchEvents,
-  toEventGridData
+  toEventGridData,
+  toNumberOrZero
 } from '../services/eventApi'
 
 /** グリッドの1行分（indexはストア上の元の位置。並べ替えても詳細画面で正しい行を開くために持つ） */
@@ -42,22 +44,44 @@ const changedCells = computed(() => {
 /** 取得に使うURL（選択中の件数を反映） */
 const url = computed(() => buildEventUrl(limit.value))
 
-/** 全列をソート・フィルタ可能にした列定義 */
-const columnDefs: ColDef<EventRow>[] = EVENT_COLUMNS.map(({ column }, i) => ({
-  headerName: column.name,
-  colId: column.name,
-  width: column.width,
-  valueGetter: (p) => p.data?.cells[i] ?? '',
-  filter: 'agSetColumnFilter',
-  cellClassRules: { changed: (p: CellClassParams<EventRow>) => !!p.data && !!changedCells.value[p.data.index]?.[i] }
-}))
-/** 全列共通の設定（ソート・フィルタ・リサイズ・読み取り専用・行グループ化の許可） */
+/** 数値列（人数・料金）用の列定義。空欄は 0 として扱い、合計・平均なども選べる */
+const NUMERIC_COL_DEF: ColDef<EventRow> = {
+  type: 'numericColumn',
+  filter: 'agNumberColumnFilter',
+  defaultAggFunc: 'sum',
+  allowedAggFuncs: ['sum', 'avg', 'min', 'max', 'count']
+}
+
+/** 全列をソート・フィルタ可能にした列定義（人数・料金は数値列） */
+const columnDefs: ColDef<EventRow>[] = EVENT_COLUMNS.map(({ column }, i) => {
+  const numeric = EVENT_NUMERIC_COLUMNS.includes(column.name)
+  return {
+    headerName: column.name,
+    colId: column.name,
+    width: column.width,
+    valueGetter: (p) => {
+      const text = p.data?.cells[i] ?? ''
+      return numeric ? toNumberOrZero(text) : text
+    },
+    filter: 'agSetColumnFilter',
+    ...(numeric ? NUMERIC_COL_DEF : {}),
+    cellClassRules: { changed: (p: CellClassParams<EventRow>) => !!p.data && !!changedCells.value[p.data.index]?.[i] }
+  }
+})
+
+/**
+ * 全列共通の設定（ソート・フィルタ・リサイズ・読み取り専用・行グループ化と集計の許可）。
+ * 文字列列の集計は件数・先頭・末尾のみ選べるようにする（初期値は件数）。数値列は列定義側で上書きする。
+ */
 const defaultColDef: ColDef<EventRow> = {
   sortable: true,
   resizable: true,
   floatingFilter: true,
   editable: false,
-  enableRowGroup: true
+  enableRowGroup: true,
+  enableValue: true,
+  defaultAggFunc: 'count',
+  allowedAggFuncs: ['count', 'first', 'last']
 }
 /** データがないときの表示文言 */
 const localeText = { noRowsToShow: '「取得」ボタンでイベントを取得してください' }
@@ -156,6 +180,7 @@ function openDetail(e: RowDoubleClickedEvent<EventRow>): void {
     :column-defs="columnDefs"
     :default-col-def="defaultColDef"
     :row-numbers="true"
+    grand-total-row="bottom"
     :locale-text="localeText"
     :cell-selection="true"
     :side-bar="['columns', 'filters']"

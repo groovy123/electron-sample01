@@ -9,7 +9,7 @@ describe('platform', () => {
 
   describe('isElectron', () => {
     it('window.api が存在する場合はtrueを返す', () => {
-      window.api = { getAppVersion: vi.fn(), fetchEvents: vi.fn() }
+      window.api = { getAppVersion: vi.fn(), fetchEvents: vi.fn(), fetchFacilities: vi.fn() }
       expect(isElectron()).toBe(true)
     })
 
@@ -20,7 +20,7 @@ describe('platform', () => {
 
   describe('getAppVersion', () => {
     it('Electron環境ではIPC経由でバージョンを取得する', async () => {
-      window.api = { getAppVersion: vi.fn().mockResolvedValue('1.2.3'), fetchEvents: vi.fn() }
+      window.api = { getAppVersion: vi.fn().mockResolvedValue('1.2.3'), fetchEvents: vi.fn(), fetchFacilities: vi.fn() }
       await expect(getAppVersion()).resolves.toBe('1.2.3')
       expect(window.api.getAppVersion).toHaveBeenCalledOnce()
     })

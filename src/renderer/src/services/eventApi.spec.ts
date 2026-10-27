@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { buildEventUrl, EVENT_LIMIT_OPTIONS, excludeEmptyId, extractEvents, fetchEvents, toEventGridData } from './eventApi'
+import { buildEventUrl, EVENT_LIMIT_OPTIONS, excludeEmptyId, extractEvents, fetchEvents, toEventGridData, toNumberOrZero } from './eventApi'
 
 describe('eventApi', () => {
   afterEach(() => {
@@ -67,7 +67,7 @@ describe('eventApi', () => {
   describe('fetchEvents', () => {
     it('Electron環境ではIPC経由で取得する', async () => {
       const ipc = vi.fn().mockResolvedValue([[{ ID: { 識別値: '1' } }], {}])
-      window.api = { getAppVersion: vi.fn(), fetchEvents: ipc }
+      window.api = { getAppVersion: vi.fn(), fetchEvents: ipc, fetchFacilities: vi.fn() }
       await expect(fetchEvents(20)).resolves.toEqual([{ ID: { 識別値: '1' } }])
       expect(ipc).toHaveBeenCalledWith(20)
     })
@@ -82,6 +82,21 @@ describe('eventApi', () => {
     it('HTTPエラーは例外にする', async () => {
       vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 500 }))
       await expect(fetchEvents()).rejects.toThrow('HTTP 500')
+    })
+  })
+
+  describe('toNumberOrZero', () => {
+    it('数値文字列を数値に変換する（小数・桁区切り・前後の空白を許容）', () => {
+      expect(toNumberOrZero('30')).toBe(30)
+      expect(toNumberOrZero(' 1,500 ')).toBe(1500)
+      expect(toNumberOrZero('2.5')).toBe(2.5)
+    })
+
+    it('空欄・空白のみ・数値でない値は 0 にする', () => {
+      expect(toNumberOrZero('')).toBe(0)
+      expect(toNumberOrZero('   ')).toBe(0)
+      expect(toNumberOrZero('無料')).toBe(0)
+      expect(toNumberOrZero('Infinity')).toBe(0)
     })
   })
 })

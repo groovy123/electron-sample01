@@ -19,6 +19,8 @@ declare global {
       getAppVersion: () => Promise<string>
       /** メインプロセス経由で外部API（イベント一覧）のレスポンスJSONを取得する */
       fetchEvents: (limit: number) => Promise<unknown>
+      /** メインプロセス経由で外部API（公共施設一覧）のレスポンスJSON（全件）を取得する */
+      fetchFacilities: () => Promise<unknown>
     }
   }
 

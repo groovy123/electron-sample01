@@ -17,6 +17,7 @@ const menuItems: readonly MenuItem[] = [
   { title: 'Home', icon: 'mdi-view-dashboard', to: '/' },
   { title: 'イベント一覧', icon: 'mdi-calendar-star', to: '/events' },
   { title: 'イベント一覧（AG Grid）', icon: 'mdi-table-large', to: '/events-ag-grid' },
+  { title: '公共施設一覧', icon: 'mdi-domain', to: '/facilities' },
   { title: 'ExcelGridサンプル', icon: 'mdi-table', to: '/excel-grid' },
   { title: 'PropertyGridサンプル', icon: 'mdi-format-list-bulleted', to: '/property-grid' },
   { title: 'About', icon: 'mdi-information', to: '/about' }
