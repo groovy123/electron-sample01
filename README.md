@@ -75,7 +75,7 @@ npm run test:e2e
 
 1. ネットワークが使える環境で、使用する Electron と同じバージョン（`node_modules/electron/package.json` の `version`）のドライバーを入手する。
    - 例: `https://github.com/electron/electron/releases/download/v45.0.0/chromedriver-v45.0.0-linux-x64.zip`（OS・CPUに合うものを選ぶ）
-   - または、一度E2Eを実行した環境の `<tmpdir>/chromedriver/` 配下にできたファイルをコピーする。
+   - または、一度E2Eを実行した環境の `C:\Users\<自分の名前>\AppData\Local\Temp\chromedriver` 配下にできたファイルをコピーする。
 2. zip を展開した `chromedriver`（Windows は `chromedriver.exe`）を、オフライン環境の任意の場所へ置き、実行権限を付ける。
 3. パスを指定して実行する。
 
