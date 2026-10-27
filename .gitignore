@@ -6,6 +6,7 @@ dist-electron/
 coverage/
 docs/
 data/
+work/
 *.log
 .env
 .env.*.local
