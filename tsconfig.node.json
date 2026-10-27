@@ -4,7 +4,7 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "types": ["electron-vite/node"],
+    "types": ["electron-vite/node", "@wdio/globals/types", "@wdio/mocha-framework", "wdio-electron-service"],
     "skipLibCheck": true,
     "strict": true,
     "noUnusedLocals": true,
@@ -16,6 +16,8 @@
     "electron.vite.config.ts",
     "vite.config.web.ts",
     "vitest.config.ts",
+    "wdio.conf.ts",
+    "e2e/**/*",
     "config/**/*",
     "src/main/**/*",
     "src/preload/**/*"

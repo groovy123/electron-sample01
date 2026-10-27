@@ -17,6 +17,7 @@ function createTestRouter(): Router {
     routes: [
       { path: '/', name: 'home', component: HomeView },
       { path: '/events', name: 'events', component: HomeView },
+      { path: '/events-ag-grid', name: 'events-ag-grid', component: HomeView },
       { path: '/excel-grid', name: 'excel-grid', component: HomeView },
       { path: '/property-grid', name: 'property-grid', component: HomeView },
       { path: '/about', name: 'about', component: AboutView }
@@ -50,7 +51,7 @@ describe('App', () => {
 
     const drawer = wrapper.find('.v-navigation-drawer')
     expect(drawer.exists()).toBe(true)
-    expect(drawer.findAll('a').map((a) => a.attributes('href'))).toEqual(['#/', '#/events', '#/excel-grid', '#/property-grid', '#/about'])
+    expect(drawer.findAll('a').map((a) => a.attributes('href'))).toEqual(['#/', '#/events', '#/events-ag-grid', '#/excel-grid', '#/property-grid', '#/about'])
   })
 
   it('上部バー右端にアラート通知・ユーザー名を表示する', async () => {
